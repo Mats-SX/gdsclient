@@ -2,6 +2,7 @@ import os
 from pathlib import Path
 from typing import Any, Generator
 
+import pandas
 import pytest
 from neo4j import Driver, GraphDatabase
 
@@ -11,7 +12,9 @@ from graphdatascience.query_runner.neo4j_query_runner import Neo4jQueryRunner
 URI = os.environ.get("NEO4J_URI", "bolt://localhost:7687")
 URI_TLS = os.environ.get("NEO4J_URI", "bolt+ssc://localhost:7687")
 
-AUTH = ("neo4j", "password")
+pandas.set_option("display.max_colwidth", None)
+
+AUTH = ("neo4j", ".....")
 if os.environ.get("NEO4J_USER"):
     AUTH = (
         os.environ.get("NEO4J_USER", "DUMMY"),

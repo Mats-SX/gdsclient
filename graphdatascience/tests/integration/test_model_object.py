@@ -1,5 +1,6 @@
 from typing import Generator
 
+import pandas
 import pytest
 
 from graphdatascience.graph.graph_object import Graph
@@ -21,6 +22,14 @@ def G(runner: Neo4jQueryRunner, gds: GraphDataScience) -> Generator[Graph, None,
         (d: Node {age: 1}),
         (e: Node {age: 2}),
         (a)-[:REL]->(b),
+        (a)-[:REL]->(c),
+        (b)-[:REL]->(c),
+        (b)-[:REL]->(a),
+        (c)-[:REL]->(a),
+        (a)-[:REL]->(c),
+        (b)-[:REL]->(c),
+        (b)-[:REL]->(a),
+        (c)-[:REL]->(a),
         (a)-[:REL]->(c),
         (b)-[:REL]->(c),
         (b)-[:REL]->(a),
@@ -111,3 +120,37 @@ def test_model_repr(gs_model: GraphSageModel) -> None:
 
 def test_model_info(gs_model: GraphSageModel) -> None:
     assert gs_model.model_info()["modelName"] == "gs-model"
+
+
+def test_things(gds: GraphDataScience, G: Graph) -> None:
+    p = gds.lp_pipe("my-pipeline")
+
+    print("\n")
+    print(p.name())
+
+    p.configureSplit(testFraction=0.2, trainFraction=0.8)
+    p.addLogisticRegression()
+    p.addNodeProperty("degree", mutateProperty="deg1")
+    p.addNodeProperty("degree", mutateProperty="deg2")
+    p.addNodeProperty("degree", mutateProperty="deg3")
+    p.addNodeProperty("degree", mutateProperty="deg4")
+    p.addNodeProperty("degree", mutateProperty="deg5")
+
+    p.addFeature("L2", nodeProperties=["deg1", "deg2", "deg3", "deg4", "deg5"])
+    p.addFeature("HADAMARD", nodeProperties=["deg1", "deg2", "deg3", "deg4", "deg5"])
+    p.addFeature("COSINE", nodeProperties=["deg1", "deg2", "deg3", "deg4", "deg5"])
+
+    pandas.set_option("display.max_colwidth", None)
+
+    model, r = p.train(G, metrics=["AUCPR"], modelName="model", targetRelationshipType="REL")
+
+    print("result")
+    print(r)
+
+    print("node prop steps")
+    print(model.node_property_steps())
+    print("feature steps?")
+    features = model.link_features()
+    print(features)
+    print([str(f) for f in features])
+    print([f.name for f in features])
